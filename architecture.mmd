@@ -1,0 +1,49 @@
+flowchart TD
+    subgraph UI["Streamlit UI  (app.py)"]
+        A["Owner & Pet Input"]
+        B["Task Management"]
+        C["Schedule Display"]
+        D["AI Care Advisor Panel\n(Section 6)"]
+    end
+
+    subgraph Core["Core Logic  (pawpal_system.py)"]
+        E["Task / Pet / Owner\ndataclasses"]
+        F["Scheduler\n· generate_plan()\n· detect_conflicts()\n· sort_by_time()"]
+    end
+
+    subgraph AIModule["AI Module  (ai_advisor.py)"]
+        G["AIAdvisor\n· agentic tool-use loop\n· confidence parser\n· error handler"]
+        H["PetCareRAG\n· retrieve(species, category)\n· identify_gaps(species, cats)"]
+        I[("Knowledge Base\n80 care tips\n5 species × 6 categories")]
+    end
+
+    subgraph External["External Service"]
+        J["Claude API\nclaude-haiku-4-5"]
+    end
+
+    subgraph Reliability["Reliability Layer"]
+        K["logs/pawpal_ai.log\n(every AI interaction)"]
+        L["tests/tests.py\n25 scheduling tests"]
+        M["tests/test_ai_advisor.py\n22 AI unit tests\n(client mocked)"]
+    end
+
+    A --> E
+    B --> E
+    E --> F
+    F --> C
+    C --> D
+
+    D -->|"pet + scheduled tasks\n+ owner context"| G
+    G -->|"tool: retrieve_care_tips\n(species, category)"| H
+    G -->|"tool: identify_schedule_gaps\n(species, scheduled_categories)"| H
+    H --> I
+    I -->|"fact strings"| H
+    H -->|"JSON tool result"| G
+    G <-->|"messages + tool_use\n(agentic loop ≤6 turns)"| J
+    J -->|"advice + CONFIDENCE: X.XX"| G
+    G -->|"advice, confidence,\ngaps_found"| D
+    G -->|"logs every call"| K
+
+    L -.->|"validates"| F
+    M -.->|"validates"| G
+    M -.->|"validates"| H
